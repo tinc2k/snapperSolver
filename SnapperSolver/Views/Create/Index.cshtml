@@ -1,0 +1,134 @@
+﻿@{
+    ViewBag.Title = "SnapperSolver | Create";
+}
+
+@using (Html.BeginForm("Index", "Create", FormMethod.Post))
+{
+    <div id="surface">
+        <table>
+            @for (int i = 1; i <= SnapperSolver.Models.Dimensions.NumberOfRows; i++)
+            {
+                <tr>
+                    @for (int j = 1; j <= SnapperSolver.Models.Dimensions.NumberOfColumns; j++)
+                    {
+                        <td>
+                            <span class="block"></span>
+                            @Html.Hidden("block" + i + j)
+                        </td>
+                    }
+                </tr>
+            }
+        </table>
+    </div>
+
+    <div id="toolbox">
+        <div class="toolframe selected">
+            <span class="tool null" data-brush="null"></span>
+        </div>
+        <div class="toolframe">
+            <span class="tool red" data-brush="red"></span>
+        </div>
+        <div class="toolframe">
+            <span class="tool green" data-brush="green"></span>
+        </div>
+        <div class="toolframe">
+            <span class="tool orange" data-brush="orange"></span>
+        </div>
+        <div class="toolframe">
+            <span class="tool blue" data-brush="blue"></span>
+        </div>
+
+        <span onclick="document.forms[0].submit();" id="solveButton">Run!</span> <!-- like a dirty hippie -->
+    </div>
+    
+    <div id="historyContainer">
+    </div>
+
+}
+
+
+@section scripts {
+    <script type="text/javascript">
+        /*global variables:*/
+        var selected_tool = 'null';
+        var whole_url = window.location.href;
+        var server_url = whole_url.substring(0, whole_url.indexOf('/Create/Index/'));
+        var play_url = server_url + '/Play/Index/';
+        var sorted = [];
+
+        /*on pageload:*/
+        $(function () {
+
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                var value = localStorage.getItem(key);
+                if (key.indexOf('snap') == 0) {
+                    sorted.push([value, key]);
+                }
+            }
+
+            sorted.sort(function (a, b) {
+                return a[0] < b[0] ? +1 : -1;
+            });
+
+
+            for (var i = 0; i < sorted.length; i++) {
+                var key = sorted[i][1]
+                var value = sorted[i][0];
+
+                $('#historyContainer').append('<div class="historyItemContainer"></div>');
+                var container = $('#historyContainer .historyItemContainer').last();
+                key = key.substring(4);
+
+                for (var j = 0; j <= key.length; j+=3) {
+                    var row = key.charAt(j);
+                    var column = key.charAt(j+1);
+                    var color = key.charAt(j+2);
+
+                    column = parseInt(column) * 10 - 10;
+                    row = parseInt(row) * 10 - 10;
+
+                    var itemClass = "";
+                    switch (color) {
+                        case 'r':
+                            itemClass = 'historyRed';
+                            break;
+                        case 'g':
+                            itemClass = 'historyGreen';
+                            break;
+                        case 'o':
+                            itemClass = 'historyOrange';
+                            break;
+                        case 'b':
+                            itemClass = 'historyBlue';
+                            break;
+                    }
+                    $(container).append('<div class="' + itemClass + '" data-key="' + key + '"></div>');
+                    $(container).find('div').last().css('left', column);
+                    $(container).find('div').last().css('top', row);
+                }
+            }
+
+            $('.historyItemContainer div').on('click', function(event){
+                var level = $(this).attr('data-key');
+                window.location.href = play_url + level;
+            });
+
+        });
+
+        /*selecting a tool (brush):*/
+        $('.tool').click(function (caller) {
+            selected_tool = $(this).attr('data-brush');
+            $('#toolbox').find('.toolframe').removeClass('selected');
+            $(this).parent().addClass('selected');
+        });
+
+        /*painting a block:*/
+        $('.block').click(function (caller) {
+            $(this).parent().find('input').val(selected_tool);
+            $(this).removeClass('null red green orange blue');
+            $(this).addClass(selected_tool);
+        });
+
+    </script>
+}

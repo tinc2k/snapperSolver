@@ -1,0 +1,206 @@
+﻿@model SnapperSolver.Models.Matrix
+@{
+    ViewBag.Title = "SnapperSolver: Play";
+}
+
+    <div id="gameContainer">
+        @foreach (var block in Model.Blocks)
+        {
+            <div class="gameBlock @SnapperSolver.Helpers.PlayHelpers.GetBlockTypeCssClass(block.Type)" data-row="@block.Row" data-column="@block.Column" data-type="@block.Type.ToString().ToLower()"></div>
+        }
+    </div>
+
+    <div id="solveContainer">
+    </div>
+
+    <select name="numberOfMoves" id="numberOfMoves">
+	    <option value="1" selected="selected">1</option>
+	    <option value="2">2</option>
+	    <option value="3">3</option>
+	    <option value="4">4</option>
+	    <option value="5">5</option>
+	    <option value="6">6</option>
+    </select>
+    <span id="solveButton">Solve!</span>
+
+
+@section scripts {
+    <script src="~/Scripts/snappersolver_datetime.js"></script>
+    <script type="text/javascript">
+        var container = $('#gameContainer');
+        var domBlocks = $('#gameContainer .gameBlock');
+        var domParticles = $('#gameContainer .gameParticle');
+
+        var whole_url = window.location.href;
+        var level_code = whole_url.substring(whole_url.indexOf('/Play/Index/') + 12);
+        var server_url = whole_url.substring(0, whole_url.indexOf('/Play/Index/'));
+        var solve_url = server_url + '/Solve/Index/' + level_code; /*+ '?moves=2';*/
+
+        $('#solveButton').click(function (caller) {
+            $('#solveContainer').html('');
+            var level = $('#numberOfMoves').val();
+            $.ajax({
+                type: "GET",
+                url: solve_url,
+                data: { moves: level }
+            }).done(function (msg) {
+                $('#solveContainer').html(msg);
+            });
+        });
+
+        /*event handler: document load*/
+        $(function () {
+            /*position the blocks*/
+            $.each(domBlocks, function (index, value) {
+                repositionBlock(value);
+            });
+            /*save level code to html5 web storage*/
+            localStorage.setItem('snap' + level_code, GetDecentDate());
+        });
+
+        /*event handler: making a move*/
+        $(domBlocks).click(function () {
+            /*hit this block*/
+            hitBlock(this, null);
+            /*let's progress...*/
+            advanceTimeRecursion();
+        });
+
+        function advanceTimeRecursion() {
+            $.each($('#gameContainer .gameParticle'), function (index, value) {
+                var type = $(value).attr('data-direction');
+                var current = 0;
+                var distance = 5;   /*magic number, number of pixels the particles move in each recursion*/
+                /*move the particle*/
+                switch (type) {
+                    case 'up':
+                        current = $(value).position().top;
+                        $(value).css('top', current + distance);
+                        break;
+                    case 'down':
+                        current = $(value).position().top;
+                        $(value).css('top', current - distance);
+                        break;
+                    case 'left':
+                        current = $(value).position().left;
+                        $(value).css('left', current - distance);
+                        break;
+                    case 'right':
+                        current = $(value).position().left;
+                        $(value).css('left', current + distance);
+                        break;
+                }
+                /*check for collisions with blocks*/
+                $.each($('#gameContainer .gameBlock'), function (index2, value2) {
+                    var hasColided = $.collision([value, value2]);
+                    if (hasColided) {
+                        hitBlock(value2, value);
+                    }
+                });
+                /*kill the block if it went outside*/
+                var hasDissappeared = $.collision([value, $('#gameContainer')]);
+                if (!hasDissappeared) {
+                    $(value).remove();
+                }
+            });
+            if ($('#gameContainer .gameParticle').length != 0) {
+                /*https://developer.mozilla.org/en-US/docs/DOM/window.setTimeout*/
+                timeoutId = window.setTimeout(advanceTimeRecursion, 20);
+            }
+        }
+
+        /*event handler: reacting to container DOM changes*/
+        $(container).change(function () {
+        });
+
+        function repositionBlock(value) {
+            var width = $(value).width();
+            var height = $(value).height();
+            var row = $(value).attr('data-row');
+            var column = $(value).attr('data-column');
+
+            var left_offset = parseInt(width) / 2;
+            var left = column * 60 - left_offset;   /*magic 60px offset, i liked it visually as a distance between rows and columns*/
+            $(value).css('left', left + 'px');
+
+            var top_offset = parseInt(height) / 2;  
+            var top = row * 60 - top_offset;        /*magic 60px offset, i liked it visually as a distance between rows and columns*/
+            $(value).css('top', top + 'px');
+        }
+
+        function hitBlock(block, particle) {
+            var _block = $(block);
+            var _type = _block.attr('data-type');
+            var _particle_size = 12;    /*MAGIC MAGIC MAGIC*/
+            var block_center_X = _block.position().left + _block.width() / 2 - _particle_size/2;
+            var block_center_Y = _block.position().top + _block.height() / 2 - _particle_size/2;
+            _block.removeClass('gameBlockRed gameBlockGreen gameBlockOrange gameBlockBlue')
+            switch (_type) {
+                case 'red':
+                    $(_block).attr('data-type', 'null');
+                    $(_block).remove();
+                    
+                    $(particle).remove(); /*kill particle that hit the block*/
+                    /*create new explosion particles*/
+                    $(container).append('<div class="gameParticle" data-direction="up" style="left:' + block_center_X + 'px; top:' + block_center_Y + 'px;"></div>');
+                    $(container).append('<div class="gameParticle" data-direction="right" style="left:' + block_center_X + 'px; top:' + block_center_Y + 'px;"></div>');
+                    $(container).append('<div class="gameParticle" data-direction="down" style="left:' + block_center_X + 'px; top:' + block_center_Y + 'px;"></div>');
+                    $(container).append('<div class="gameParticle" data-direction="left" style="left:' + block_center_X + 'px; top:' + block_center_Y + 'px;"></div>');
+                    break;
+                case 'green':
+                    $(block).attr('data-type', 'red');
+                    $(block).addClass('gameBlockRed');
+                    repositionBlock($(block));
+                    $(particle).remove();
+                    break;
+                case 'orange':
+                    $(block).attr('data-type', 'green');
+                    $(block).addClass('gameBlockGreen');
+                    repositionBlock($(block));
+                    $(particle).remove();
+                    break;
+                case 'blue':
+                    $(block).attr('data-type', 'orange');
+                    $(block).addClass('gameBlockOrange');
+                    repositionBlock($(block));
+                    $(particle).remove();
+                    break;
+            }
+        };
+
+        /*http://badsyntax.co/post/javascript-collision-detection*/
+        $.collision = function (selector) {
+            var data = [];
+            $(selector).each(function () {
+                var elem = $(this);
+                var offset = elem.offset();
+                var width = elem.outerWidth();
+                var height = elem.outerHeight();
+                data.push({
+                    tl: { x: offset.left, y: offset.top },
+                    tr: { x: offset.left + width, y: offset.top },
+                    bl: { x: offset.left, y: offset.top + height },
+                    br: { x: offset.left + width, y: offset.top + height }
+                });
+            });
+            var i, l;
+            i = data.length;
+            while (i--) {
+                l = data.length;
+                while (l-- && l !== i) {
+                    if (!(
+                      data[l].br.x < data[i].bl.x ||
+                      data[l].bl.x > data[i].br.x ||
+                      data[l].bl.y < data[i].tl.y ||
+                      data[l].tl.y > data[i].bl.y
+                    )) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
+    </script>
+
+}

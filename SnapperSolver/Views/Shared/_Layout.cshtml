@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+</head>
+<body>
+    <header>
+        <h1>@ViewBag.Title</h1>
+    </header>
+    <span style="clear:both;"></span>
+    @RenderBody()
+
+    @Scripts.Render("~/bundles/jquery")
+    @RenderSection("scripts", required: false)
+    <footer>
+        <h2><a href="mailto:injankovic@gmail.com">Ines Jankovic</a> & <a href="mailto:tin.crnkovic@gmail.com">Tin Crnkovic</a></h2>
+        <h3><a href="http://www.gnu.org/licenses/gpl.html">GPL v3</a></h3>
+    </footer>
+</body>
+</html>
