@@ -123,8 +123,13 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\PlayHelpers.cs" />
-    <Compile Include="Models\Snapper.cs" />
+    <Compile Include="Models\Block.cs" />
+    <Compile Include="Models\Enums.cs" />
+    <Compile Include="Models\Game.cs" />
+    <Compile Include="Models\Matrix.cs" />
+    <Compile Include="Models\Particle.cs" />
     <Compile Include="Models\Solver.cs" />
+    <Compile Include="Models\Static.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
