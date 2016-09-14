@@ -8,7 +8,7 @@ The game, it's level editor and game history were build using JavaScript, HTML5 
 This is a *quick-and-dirty*, *hackathon-quality* application written for [Clarity Consulting](www.claritycon.com)'s first Tech Challenge for Offshore Teams. 
 
 ## Brought to you by communism ##
-Copyright (C) 2013. Tin Crnkovic (tin.crnkovic@gmail.com) and Ines Jankovic (injankovic@gmail.com)
+Copyright (C) 2013. Tin Crnkovic (tinc2k@gmail.com) and Ines Jankovic (injankovic@gmail.com)
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
